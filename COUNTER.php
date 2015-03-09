@@ -318,7 +318,7 @@ namespace COUNTER {
 		/**
 		 * Do NOT build this object
 		 * This method must be implemented in the subclass
-		 * Subclasses should call this method if unable to build the object.
+		 * Subclasses should call this method if unable to build the object in order to report an error.
 		 * @throws Exception
 		 */
 		public static function build($array) {
@@ -356,7 +356,12 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['Report'])) {
+					// Nicely structured associative array
 					$reports = parent::buildMultiple('COUNTER\Report', $array['Report']);
+					return new self($reports);
+				} elseif (!parent::isAssociative($array)) {
+					// Just an array of reports
+					$reports = parent::buildMultiple('COUNTER\Report', $array);
 					return new self($reports);
 				}
 			}
@@ -467,6 +472,7 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['ReportAttributes']['ID']) && isset($array['ReportAttributes']['Version']) && isset($array['ReportAttributes']['Name']) && isset($array['ReportAttributes']['Title']) && isset($array['Customer']) && isset($array['Vendor'])) {
+					// Nicely structured associative array
 					$customers = parent::buildMultiple('COUNTER\Customer', $array['Customer']);
 					return new self(
 						$array['ReportAttributes']['ID'],
@@ -561,6 +567,7 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['ID'])) {
+					// Nicely structured associative array
 					$contacts = parent::buildMultiple('COUNTER\Contact', isset($array['Contact']) ? $array['Contact'] : array());
 					return new self(
 						$array['ID'],
@@ -638,6 +645,35 @@ namespace COUNTER {
 			if (is_array($array)) {
 				if (isset($array['Contact']) || isset($array['Email'])) {
 					return new self($array['Contact'] ? $array['Contact'] : '', $array['Email'] ? $array['Email'] : '');
+				} elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
+					// Loosely structured associative array (name/email => name/email)
+					foreach ($array as $k => $v) {
+						if (filter_var($k, FILTER_VALIDATE_EMAIL)) {
+							// email => name
+							return new self($v, $k);
+						} else {
+							// name => email
+							return new self($k, $v);
+						}
+					}
+				} elseif (count(array_keys($array)) == 1 && !parent::isAssociative($array)) {
+					// Loosely array with a name or email
+					if (filter_var($k, FILTER_VALIDATE_EMAIL)) {
+						// email
+						return new self('', $array[0]);
+					} else {
+						// name
+						return new self($array[0]);
+					}
+				}
+			} elseif (is_string($array)) {
+				// Just a name or email
+				if (filter_var($array, FILTER_VALIDATE_EMAIL)) {
+					// email
+					return new self('', $array);
+				} else {
+					// name
+					return new self($array);
 				}
 			}
 			parent::build($array);
@@ -737,6 +773,7 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['ID']) && isset($array['ReportItems'])) {
+					// Nicely structured associative array
 					$items = parent::buildMultiple('COUNTER\ReportItems', $array['ReportItems']);
 					$ids = parent::buildMultiple('COUNTER\Identifier', isset($array['InstitutionalIdentifier']) ? $array['InstitutionalIdentifier'] : array());
 					$contacts = parent::buildMultiple('COUNTER\Contact', isset($array['Contact']) ? $array['Contact'] : array());
@@ -827,8 +864,20 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['WellKnownName'])) {
+					// Nicely structured associative array
 					return new self($array['WellKnownName'], $array['Code'] ? $array['Code'] : '');
+				} elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
+					// Loosely structured associative array (name => code)
+					foreach ($array as $k => $v) {
+						return new self($k, $v);
+					}
+				} elseif (count(array_keys($array)) == 1 && !parent::isAssociative($array)) {
+					// Loosely array with a name
+					return new self($array[0]);
 				}
+			} elseif (is_string($array)) {
+				// Just a name
+				return new self($array);
 			}
 			parent::build($array);
 		}
@@ -942,6 +991,7 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['ItemPlatform']) && isset($array['ItemName']) && isset($array['ItemDataType']) && isset($array['ItemPerformance'])) {
+					// Nicely structured associative array
 					$performance = parent::buildMultiple('COUNTER\Metric', $array['ItemPerformance']);
 					$ids = parent::buildMultiple('COUNTER\Identifier', isset($array['ItemIdentifier']) ? $array['ItemIdentifier'] : array());
 					$contributors = parent::buildMultiple('COUNTER\ItemContributor', isset($array['ItemContributor']) ? $array['ItemContributor'] : array());
@@ -1081,6 +1131,7 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['ItemName']) && isset($array['ItemDataType'])) {
+					// Nicely structured associative array
 					$ids = parent::buildMultiple('COUNTER\Identifier', isset($array['ItemIdentifier']) ? $array['ItemIdentifier']: array());
 					$contributors = parent::buildMultiple('COUNTER\ItemContributor', isset($array['ItemContributor']) ? $array['ItemContributor'] : array());
 					$dates = parent::buildMultiple('COUNTER\ItemDate', isset($array['ItemDate']) ? $array['ItemDate'] : array());
@@ -1185,6 +1236,7 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['ItemContributorID']) || isset($array['ItemContributorName']) || isset($array['ItemContributorAffiliation']) || isset($array['ItemContributorRole'])) {
+					// Nicely structured associative array
 					$ids = parent::buildMultiple('COUNTER\ItemContributorId', isset($array['ItemContributorID']) ? $array['ItemContributorID'] : array());
 					return new self(
 						$ids,
@@ -1266,7 +1318,13 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['Type']) && isset($array['Value'])) {
+					// Nicely structured associative array
 					return new self($array['Type'], $array['Value']);
+				} elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
+					// Loosely structured associative array (type => value)
+					foreach ($array as $k => $v) {
+						return new self($k, $v);
+					}
 				}
 			}
 			parent::build($array);
@@ -1325,7 +1383,13 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['Type']) && isset($array['Value'])) {
+					// Nicely structured associative array
 					return new self($array['Type'], $array['Value']);
+				} elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
+					// Loosely structured associative array (type => value)
+					foreach ($array as $k => $v) {
+						return new self($k, $v);
+					}
 				}
 			}
 			parent::build($array);
@@ -1383,7 +1447,13 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['Type']) && isset($array['Value'])) {
+					// Nicely structured associative array
 					return new self($array['Type'], $array['Value']);
+				} elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
+					// Loosely structured associative array (type => value)
+					foreach ($array as $k => $v) {
+						return new self($k, $v);
+					}
 				}
 			}
 			parent::build($array);
@@ -1442,7 +1512,13 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['Type']) && isset($array['Value'])) {
+					// Nicely structured associative array
 					return new self($array['Type'], $array['Value']);
+				} elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
+					// Loosely structured associative array (type => value)
+					foreach ($array as $k => $v) {
+						return new self($k, $v);
+					}
 				}
 			}
 			parent::build($array);
@@ -1534,6 +1610,7 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['Period']) && isset($array['Instance']) && isset($array['Category'])) {
+					// Nicely structured associative array
 					$instances = parent::buildMultiple('COUNTER\PerformanceCounter', $array['Instance']);
 					return new self(
 						DateRange::build($array['Period']),
@@ -1613,7 +1690,11 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['Begin']) && isset($array['End'])) {
+					// Nicely structured associative array
 					return new self($array['Begin'], $array['End']);
+				} elseif (count(array_keys($array)) == 2 && !parent::isAssociative($array)) {
+					// Unstructured array of two elements, assume begin and end dates
+					return new self($array[0], $array[1]);
 				}
 			}
 			parent::build($array);
@@ -1671,7 +1752,13 @@ namespace COUNTER {
 		public static function build($array) {
 			if (is_array($array)) {
 				if (isset($array['MetricType']) && isset($array['Count'])) {
+					// Nicely structured associative array
 					return new self($array['MetricType'], $array['Count']);
+				} elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
+					// Loosely structured associative array (type => count)
+					foreach ($array as $k => $v) {
+						return new self($k, $v);
+					}
 				}
 			}
 			parent::build($array);
