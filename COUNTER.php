@@ -27,7 +27,7 @@ namespace COUNTER {
 	 * @copyright 2015 University of Pittsburgh
 	 * @license http://www.gnu.org/licenses/gpl-2.0.html GPL 2.0 or later
 	 * @package COUNTER
-	 * @version 0.1
+	 * @version 0.2
 	 * 
 	 * @section DESCRIPTION
 	 * 
@@ -89,8 +89,23 @@ namespace COUNTER {
 			}
 			if (is_null($object)) {
 				throw new \Exception('Invalid object. Expected "'.$expectedClassname.'", got "NULL"');
-			}
-			elseif ($expectedClassname == get_class($object) || is_subclass_of($object, $expectedClassname)) {
+			} elseif (is_array($object)) {
+				switch ($className) {
+					default:
+						throw new \Exception('Invalid class. Expected "'.$expectedClassname.'", got unparsable array');
+				}
+			} elseif (is_string($object)) {
+				switch ($className) {
+					case '\DateTime':
+						$date = date_create($object);
+						if ($date) {
+							return $date;
+						}
+						break;
+					default:
+				}
+				throw new \Exception('Invalid class. Expected "'.$expectedClassname.'", got unparsable string');
+			} elseif ($expectedClassname == get_class($object) || is_subclass_of($object, $expectedClassname)) {
 				return $object;
 			} else {
 				throw new \Exception('Invalid class. Expected "'.$expectedClassname.'", got "'.get_class($object).'"');
@@ -192,6 +207,36 @@ namespace COUNTER {
 		}
 
 		/**
+		 * Check an array to see if it has associative (non-numeric) keys
+		 * @param array $array
+		 * @return boolean
+		 */
+		protected static function isAssociative($array) {
+			return count(array_filter(array_keys($array), 'is_string')) > 0;
+		}
+
+		/**
+		 * Given an classname and an array, call the $classname::build method and return the built object(s)
+		 * The array can be associative (for a single object), or an array of associative arrays (for multiple objects)
+		 * @param string $classname
+		 * @param array $array
+		 * @return mixed object or array of objects
+		 */
+		protected function buildMultiple($classname, $array) {
+			if (!is_array($array)) {
+				return array();
+			}else if (self::isAssociative($array)) {
+				return $classname::build($array);
+			} else {
+				$elements = array();
+				foreach ($array as $element) {
+					$elements[] = $classname::build($element);
+				}
+				return $elements;
+			}
+		}
+
+		/**
 		 * Return an array of valid Item Data Types
 		 * @return array
 		 * @todo verify addition of "Article" here for proposed release 4.2.
@@ -263,10 +308,21 @@ namespace COUNTER {
 
 		/**
 		 * Do NOT Output this object as a DOMDocument
+		 * This method must be implemented in the subclass
 		 * @throws Exception
 		 */
 		public function asDOMDocument() {
 			throw new Exception(get_class($this).' does not implement asDOMDocument()');
+		}
+		
+		/**
+		 * Do NOT build this object
+		 * This method must be implemented in the subclass
+		 * Subclasses should call this method if unable to build the object.
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			throw new \Exception('Failed to build '.get_called_class().' from data '.var_export($array, true));
 		}
 	}
 
@@ -283,12 +339,28 @@ namespace COUNTER {
 
 		/**
 		 * Construct the object
-		 * @param array $reports Counter\Report array
+		 * @param array $reports COUNTER\Report array
 		 * @return void
 		 * @throws Exception
 		 */
 		public function __construct($reports) {
 			$this->report = $this->validateOneOrMoreOf($reports, 'Report');
+		}
+
+		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['Report'])) {
+					$reports = parent::buildMultiple('COUNTER\Report', $array['Report']);
+					return new self($reports);
+				}
+			}
+			parent::build($array);
 		}
 
 		/** 
@@ -369,8 +441,8 @@ namespace COUNTER {
 		 * @param string $version
 		 * @param string $name
 		 * @param string $title
-		 * @param string $customers Counter\Customer
-		 * @param object $vendor Counter\Vendor array
+		 * @param string $customers COUNTER\Customer
+		 * @param object $vendor COUNTER\Vendor array
 		 * @param string $created optional
 		 * @return void
 		 * @throws Exception
@@ -384,6 +456,30 @@ namespace COUNTER {
 			}
 			$this->vendor = $this->validateOneOf($vendor, 'Vendor');
 			$this->customer = $this->validateOneOrMoreOf($customers, 'Customer');
+		}
+
+		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['ReportAttributes']['ID']) && isset($array['ReportAttributes']['Version']) && isset($array['ReportAttributes']['Name']) && isset($array['ReportAttributes']['Title']) && isset($array['Customer']) && isset($array['Vendor'])) {
+					$customers = parent::buildMultiple('COUNTER\Customer', $array['Customer']);
+					return new self(
+						$array['ReportAttributes']['ID'],
+						$array['ReportAttributes']['Version'],
+						$array['ReportAttributes']['Name'],
+						$array['ReportAttributes']['Title'],
+						$customers,
+						Vendor::build($array['Vendor']),
+						isset($array['ReportAttributes']['Created']) ? $array['ReportAttributes']['Created'] : ''
+					);
+				}
+			}
+			parent::build($array);
 		}
 
 		/**
@@ -443,7 +539,7 @@ namespace COUNTER {
 		 * Construct the object
 		 * @param string $id
 		 * @param string $name optional
-		 * @param array $contacts optional Counter\Contact array
+		 * @param array $contacts optional COUNTER\Contact array
 		 * @param string $webSiteUrl optional
 		 * @param string $logoUrl optional
 		 * @return void
@@ -454,6 +550,28 @@ namespace COUNTER {
 				$this->$arg = $this->validateString($$arg);
 			}
 			$this->contact = $this->validateZeroOrMoreOf($contacts, 'Contact');
+		}
+
+		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['ID'])) {
+					$contacts = parent::buildMultiple('COUNTER\Contact', isset($array['Contact']) ? $array['Contact'] : array());
+					return new self(
+						$array['ID'],
+						isset($array['Name']) ? $array['Name'] : '',
+						$contacts,
+						isset($array['WebSiteUrl']) ? $array['WebSiteUrl'] : '',
+						isset($array['LogoUrl']) ? $array['LogoUrl'] : ''
+					);
+				}
+			}
+			parent::build($array);
 		}
 
 		/**
@@ -508,6 +626,21 @@ namespace COUNTER {
 			foreach (array('contact', 'email') as $arg) {
 				$this->$arg = $this->validateString($$arg);
 			}
+		}
+
+		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['Contact']) || isset($array['Email'])) {
+					return new self($array['Contact'] ? $array['Contact'] : '', $array['Email'] ? $array['Email'] : '');
+				}
+			}
+			parent::build($array);
 		}
 
 		/**
@@ -575,13 +708,13 @@ namespace COUNTER {
 		/**
 		 * Construct the object
 		 * @param string $id
-		 * @param array $reportItems Counter\ReportItems array
+		 * @param array $reportItems COUNTER\ReportItems array
 		 * @param string $name optional
-		 * @param array $contacts optional Counter\Contacts array
+		 * @param array $contacts optional COUNTER\Contacts array
 		 * @param string $webSiteUrl optional
 		 * @param string $logoUrl optional
-		 * @param object $consortium optional Counter\Consortium
-		 * @param array $institutionalIdentifier optional Counter\Identifier array
+		 * @param object $consortium optional COUNTER\Consortium
+		 * @param array $institutionalIdentifier optional COUNTER\Identifier array
 		 * @return void
 		 * @throws Exception
 		 */
@@ -593,6 +726,33 @@ namespace COUNTER {
 			$this->contact = $this->validateZeroOrMoreOf($contacts, 'Contact');
 			$this->consortium = $this->validateZeroOrOneOf($consortium, 'Consortium');
 			$this->institutionalIdentifier = $this->validateZeroOrMoreOf($institutionalIdentifier, 'Identifier');
+		}
+
+		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['ID']) && isset($array['ReportItems'])) {
+					$items = parent::buildMultiple('COUNTER\ReportItems', $array['ReportItems']);
+					$ids = parent::buildMultiple('COUNTER\Identifier', isset($array['InstitutionalIdentifier']) ? $array['InstitutionalIdentifier'] : array());
+					$contacts = parent::buildMultiple('COUNTER\Contact', isset($array['Contact']) ? $array['Contact'] : array());
+					return new self(
+						$array['ID'],
+						$items,
+						isset($array['Name']) ? $array['Name'] : '',
+						$contacts,
+						isset($array['WebSiteUrl']) ? $array['WebSiteUrl'] : '',
+						isset($array['LogoUrl']) ? $array['LogoUrl'] : '',
+						isset($array['Consortium']) ? Consortium::build($array['Consortium']) : NULL,
+						$ids
+					);
+				}
+			}
+			parent::build($array);
 		}
 
 		/**
@@ -656,6 +816,21 @@ namespace COUNTER {
 			foreach (array('wellKnownName', 'code') as $arg) {
 				$this->$arg = $this->validateString($$arg);
 			}
+		}
+
+		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['WellKnownName'])) {
+					return new self($array['WellKnownName'], $array['Code'] ? $array['Code'] : '');
+				}
+			}
+			parent::build($array);
 		}
 
 		/**
@@ -733,12 +908,12 @@ namespace COUNTER {
 		 * @param string $itemPlatform
 		 * @param string $itemName
 		 * @param string $itemDataType
-		 * @param array $itemPerformance Counter\Metric array
-		 * @param object $parentItem optional Counter\ParentItem
-		 * @param array $itemIdentifiers optional Counter\Identifier array
-		 * @param array $itemContributors optional Counter\Contributor array
-		 * @param array $itemDates optional Counter\Date array
-		 * @param array $itemAttributes optional Counter\ItemAttribute array
+		 * @param array $itemPerformance COUNTER\Metric array
+		 * @param object $parentItem optional COUNTER\ParentItem
+		 * @param array $itemIdentifiers optional COUNTER\Identifier array
+		 * @param array $itemContributors optional COUNTER\Contributor array
+		 * @param array $itemDates optional COUNTER\Date array
+		 * @param array $itemAttributes optional COUNTER\ItemAttribute array
 		 * @param string $itemPublisher optional
 		 * @return void
 		 * @throws Exception
@@ -756,6 +931,37 @@ namespace COUNTER {
 			$this->itemContributor = $this->validateZeroOrMoreOf($itemContributors, 'ItemContributor');
 			$this->itemDate = $this->validateZeroOrMoreOf($itemDates, 'ItemDate');
 			$this->itemAttribute = $this->validateZeroOrMoreOf($itemAttributes, 'ItemAttribute');
+		}
+
+		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['ItemPlatform']) && isset($array['ItemName']) && isset($array['ItemDataType']) && isset($array['ItemPerformance'])) {
+					$performance = parent::buildMultiple('COUNTER\Metric', $array['ItemPerformance']);
+					$ids = parent::buildMultiple('COUNTER\Identifier', isset($array['ItemIdentifier']) ? $array['ItemIdentifier'] : array());
+					$contributors = parent::buildMultiple('COUNTER\ItemContributor', isset($array['ItemContributor']) ? $array['ItemContributor'] : array());
+					$dates = parent::buildMultiple('COUNTER\ItemDate', isset($array['ItemDate']) ? $array['ItemDate'] : array());
+					$attributes = parent::buildMultiple('COUNTER\ItemAttribute', isset($array['ItemAttribute']) ? $array['ItemAttribute'] : array());
+					return new self(
+						$array['ItemPlatform'],
+						$array['ItemName'],
+						$array['ItemDataType'],
+						$performance,
+						isset($array['ParentItem']) ? ParentItem::build($array['ParentItem']) : NULL,
+						$ids,
+						$contributors,
+						$dates,
+						$attributes,
+						isset($array['ItemPublisher']) ? $array['ItemPublisher'] : ''
+					);
+				}
+			}
+			parent::build($array);
 		}
 
 		/**
@@ -845,10 +1051,10 @@ namespace COUNTER {
 		 * Construct the object
 		 * @param string $itemName
 		 * @param string $itemDataType
-		 * @param array $itemIdentifiers optional Counter\Identifier array
-		 * @param array $itemContributors optional Counter\ItemContributor array
-		 * @param array $itemDates optional Counter\ItemDate array
-		 * @param array $itemAttributes optional Counter\ItemAttribute array
+		 * @param array $itemIdentifiers optional COUNTER\Identifier array
+		 * @param array $itemContributors optional COUNTER\ItemContributor array
+		 * @param array $itemDates optional COUNTER\ItemDate array
+		 * @param array $itemAttributes optional COUNTER\ItemAttribute array
 		 * @param string $itemPublisher optional
 		 * @return void
 		 * @throws Exception
@@ -864,6 +1070,33 @@ namespace COUNTER {
 			$this->itemContributor = $this->validateZeroOrMoreOf($itemContributors, 'ItemContributor');
 			$this->itemDate = $this->validateZeroOrMoreOf($itemDates, 'ItemDate');
 			$this->itemAttribute = $this->validateZeroOrMoreOf($itemAttributes, 'ItemAttribute');
+		}
+
+		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['ItemName']) && isset($array['ItemDataType'])) {
+					$ids = parent::buildMultiple('COUNTER\Identifier', isset($array['ItemIdentifier']) ? $array['ItemIdentifier']: array());
+					$contributors = parent::buildMultiple('COUNTER\ItemContributor', isset($array['ItemContributor']) ? $array['ItemContributor'] : array());
+					$dates = parent::buildMultiple('COUNTER\ItemDate', isset($array['ItemDate']) ? $array['ItemDate'] : array());
+					$attributes = parent::buildMultiple('COUNTER\ItemAttribute', isset($array['ItemAttribute']) ? $array['ItemAttribute'] : array());
+					return new self(
+						$array['ItemName'],
+						$array['ItemDataType'],
+						$ids,
+						$contributors,
+						$dates,
+						$attributes,
+						isset($array['ItemPublisher']) ? $array['ItemPublisher'] : ''
+					);
+				}
+			}
+			parent::build($array);
 		}
 
 		/**
@@ -929,7 +1162,7 @@ namespace COUNTER {
 
 		/**
 		 * Construct the object
-		 * @param array $itemContributorIds optional Counter\ContributorId array
+		 * @param array $itemContributorIds optional COUNTER\ContributorId array
 		 * @param string $itemContributorName optional 
 		 * @param array itemContributorAffiliations optional string array
 		 * @param array itemContributorRoles optional string array
@@ -941,6 +1174,27 @@ namespace COUNTER {
 			$this->itemContributorName = $this->validateString($itemContributorName);
 			$this->itemContributorAffiliation = $this->validateStrings($itemContributorAffiliations);
 			$this->itemContributorRole = $this->validateStrings($itemContributorRoles);
+		}
+
+		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['ItemContributorID']) || isset($array['ItemContributorName']) || isset($array['ItemContributorAffiliation']) || isset($array['ItemContributorRole'])) {
+					$ids = parent::buildMultiple('COUNTER\ItemContributorId', isset($array['ItemContributorID']) ? $array['ItemContributorID'] : array());
+					return new self(
+						$ids,
+						isset($array['ItemContributorName']) ? $array['ItemContributorName'] : '',
+						isset($array['ItemContributorAffiliation']) ? $array['ItemContributorAffiliation'] : '',
+						isset($array['ItemContributorRole']) ? $array['ItemContributorRole'] : ''
+					);
+				}
+			}
+			parent::build($array);
 		}
 
 		/**
@@ -1004,6 +1258,21 @@ namespace COUNTER {
 		}
 
 		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['Type']) && isset($array['Value'])) {
+					return new self($array['Type'], $array['Value']);
+				}
+			}
+			parent::build($array);
+		}
+
+		/**
 		 * Output this object as a DOMDocument
 		 * @return DOMDocument
 		 */
@@ -1045,6 +1314,21 @@ namespace COUNTER {
 			if (!in_array($type, $this->getIdentifierTypes())) {
 				throw new \Exception('Invalid type: '.$type);
 			}
+		}
+
+		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['Type']) && isset($array['Value'])) {
+					return new self($array['Type'], $array['Value']);
+				}
+			}
+			parent::build($array);
 		}
 
 		/**
@@ -1091,6 +1375,21 @@ namespace COUNTER {
 		}
 
 		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['Type']) && isset($array['Value'])) {
+					return new self($array['Type'], $array['Value']);
+				}
+			}
+			parent::build($array);
+		}
+
+		/**
 		 * Output this object as a DOMDocument
 		 * @return DOMDocument
 		 */
@@ -1132,6 +1431,21 @@ namespace COUNTER {
 			if (!in_array($type, $this->getAttributeTypes())) {
 				throw new \Exception('Invalid type: '.$type);
 			}
+		}
+
+		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['Type']) && isset($array['Value'])) {
+					return new self($array['Type'], $array['Value']);
+				}
+			}
+			parent::build($array);
 		}
 
 		/**
@@ -1184,9 +1498,9 @@ namespace COUNTER {
 
 		/**
 		 * Construct the object
-		 * @param array $period Counter\DateRange array
-		 * @param array $category Counter\Category array
-		 * @param array $instances Counter\PerformanceCounter array
+		 * @param array $period COUNTER\DateRange array
+		 * @param array $category COUNTER\Category array
+		 * @param array $instances COUNTER\PerformanceCounter array
 		 * @param int pubYrFrom optional 
 		 * @param int pubYrTo optional 
 		 * @param int pubYr optional 
@@ -1209,6 +1523,29 @@ namespace COUNTER {
 			if ($pubYr) {
 				$this->pubYr = $this->validatePositiveInteger($pubYr);
 			}
+		}
+
+		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['Period']) && isset($array['Instance']) && isset($array['Category'])) {
+					$instances = parent::buildMultiple('COUNTER\PerformanceCounter', $array['Instance']);
+					return new self(
+						DateRange::build($array['Period']),
+						$array['Category'],
+						$instances,
+						isset($array['PubYrFrom']) ? $array['PubYrFrom']: NULL,
+						isset($array['PubYrTo']) ? $array['PubYrTo'] : NULL,
+						isset($array['PubYr']) ? $array['PubYr'] : NULL
+					);
+				}
+			}
+			parent::build($array);
 		}
 
 		/**
@@ -1268,6 +1605,21 @@ namespace COUNTER {
 		}
 
 		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['Begin']) && isset($array['End'])) {
+					return new self($array['Begin'], $array['End']);
+				}
+			}
+			parent::build($array);
+		}
+
+		/**
 		 * Output this object as a DOMDocument
 		 * @return DOMDocument
 		 */
@@ -1308,6 +1660,21 @@ namespace COUNTER {
 				throw new \Exception('Invalid metric type: '.$metricType);
 			}
 			$this->count = $this->validatePositiveInteger($count);
+		}
+
+		/**
+		 * Construct the object from an array
+		 * @param array $array Hash of key-values
+		 * @return \self
+		 * @throws Exception
+		 */
+		public static function build($array) {
+			if (is_array($array)) {
+				if (isset($array['MetricType']) && isset($array['Count'])) {
+					return new self($array['MetricType'], $array['Count']);
+				}
+			}
+			parent::build($array);
 		}
 
 		/**
