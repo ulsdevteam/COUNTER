@@ -19,7 +19,7 @@
  */
 namespace COUNTER {
 	/**
-	 * COUNTER Reports classes, release 4.2
+	 * COUNTER Reports classes, release 4.1
 	 * Represents the COUNTER XSD schema in class form
 	 * @link http://www.niso.org/schemas/sushi
 	 *
@@ -27,7 +27,7 @@ namespace COUNTER {
 	 * @copyright 2015 University of Pittsburgh
 	 * @license http://www.gnu.org/licenses/gpl-2.0.html GPL 2.0 or later
 	 * @package COUNTER
-	 * @version 0.2
+	 * @version 0.3
 	 * 
 	 * @section DESCRIPTION
 	 * 
@@ -471,17 +471,17 @@ namespace COUNTER {
 		 */
 		public static function build($array) {
 			if (is_array($array)) {
-				if (isset($array['ReportAttributes']['ID']) && isset($array['ReportAttributes']['Version']) && isset($array['ReportAttributes']['Name']) && isset($array['ReportAttributes']['Title']) && isset($array['Customer']) && isset($array['Vendor'])) {
+				if (isset($array['ID']) && isset($array['Version']) && isset($array['Name']) && isset($array['Title']) && isset($array['Customer']) && isset($array['Vendor'])) {
 					// Nicely structured associative array
 					$customers = parent::buildMultiple('COUNTER\Customer', $array['Customer']);
 					return new self(
-						$array['ReportAttributes']['ID'],
-						$array['ReportAttributes']['Version'],
-						$array['ReportAttributes']['Name'],
-						$array['ReportAttributes']['Title'],
+						$array['ID'],
+						$array['Version'],
+						$array['Name'],
+						$array['Title'],
 						$customers,
 						Vendor::build($array['Vendor']),
-						isset($array['ReportAttributes']['Created']) ? $array['ReportAttributes']['Created'] : ''
+						isset($array['Created']) ? $array['Created'] : ''
 					);
 				}
 			}
@@ -495,10 +495,8 @@ namespace COUNTER {
 		public function asDOMDocument() {
 			$doc = new \DOMDocument();
 			$root = $doc->appendChild($doc->createElement('Report'));
-			$attrElement = $root->appendChild($doc->createElement('ReportAttributes'));
 			foreach (array('Created', 'ID', 'Version', 'Name', 'Title') as $arg) {
 				$lcarg = strtolower($arg);
-				$attrElement->appendChild($doc->createElement($arg))->appendChild($doc->createTextNode($this->$lcarg));
 				$attrAttr = $doc->createAttribute($arg);
 				$attrAttr->appendChild($doc->createTextNode($this->$lcarg));
 				$root->appendChild($attrAttr);
@@ -589,7 +587,7 @@ namespace COUNTER {
 			$doc = new \DOMDocument();
 			$root = $doc->appendChild($doc->createElement('Vendor'));
 			if ($this->name) {
-				$root->appendChild($doc->createElement('name'))->appendChild($doc->createTextNode($this->name));
+				$root->appendChild($doc->createElement('Name'))->appendChild($doc->createTextNode($this->name));
 			}
 			$root->appendChild($doc->createElement('ID'))->appendChild($doc->createTextNode($this->id));
 			if ($this->contact) {
