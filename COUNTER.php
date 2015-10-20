@@ -71,6 +71,7 @@ namespace COUNTER {
 	 */
 	class ReportBuilder {
 
+		const COUNTER_NAMESPACE = 'http://www.niso.org/schemas/counter';
 
 		/**
 		 * Validate that $object is a $className instance.  If valid, return the object, otherwise, throw an exception
@@ -392,7 +393,10 @@ namespace COUNTER {
 		 */
 		public function asDOMDocument() {
 			$doc = new \DOMDocument();
-			$root = $doc->appendChild($doc->createElementNS('http://www.niso.org/schemas/counter', 'Reports'));
+			$root = $doc->appendChild($doc->createElementNS(self::COUNTER_NAMESPACE, 'Reports'));
+			$xmlns = $doc->createAttributeNS('http://www.w3.org/2001/XMLSchema-instance', 'xsi:schemaLocation');
+			$xmlns->value = self::COUNTER_NAMESPACE.' http://www.niso.org/schemas/sushi/counter4_1.xsd';
+			$root->appendChild($xmlns);
 			foreach ($this->report as $rep) {
 				$root->appendChild($doc->importNode($rep->asDOMDocument()->documentElement, true));
 			}
@@ -641,6 +645,10 @@ namespace COUNTER {
 		 */
 		public static function build($array) {
 			if (is_array($array)) {
+				if (isset($array['E-mail'])) {
+					$array['Email'] = $array['E-mail'];
+					unset($array['E-mail']);
+				}
 				if (isset($array['Contact']) || isset($array['Email'])) {
 					return new self($array['Contact'] ? $array['Contact'] : '', $array['Email'] ? $array['Email'] : '');
 				} elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
@@ -688,7 +696,7 @@ namespace COUNTER {
 				$root->appendChild($doc->createElement('Contact'))->appendChild($doc->createTextNode($this->contact));
 			}
 			if ($this->email) {
-				$root->appendChild($doc->createElement('Email'))->appendChild($doc->createTextNode($this->email));
+				$root->appendChild($doc->createElement('E-mail'))->appendChild($doc->createTextNode($this->email));
 			}
 			return $doc;
 		}
