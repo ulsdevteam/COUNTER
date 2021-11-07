@@ -1,6 +1,6 @@
 <?php
 
-/*
+/**
  * Copyright (c) 2015 University of Pittsburgh
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ namespace COUNTER {
      * @section DESCRIPTION
      *
      * This is a set of classes to represent the Project COUNTER schema ( http://www.projectcounter.org/ )
-     * It is basically an ecapsulation of DOMDocument, with type checking.
+     * It is basically an encapsulation of DOMDocument, with type checking.
      * Construct any object, then cast it as a string to retrieve the XML, or call asDOMDocument() to retrieve the DOM.
      * $report = new COUNTER\Report(
      * 	'reportId',
@@ -395,9 +395,8 @@ namespace COUNTER {
      */
     class Reports extends ReportBuilder
     {
-        /*
+        /**
          * @var array one or more COUNTER\Report objects
-         * @access private
          */
         private $report = [];
 
@@ -484,39 +483,32 @@ namespace COUNTER {
      */
     class Report extends ReportBuilder
     {
-        /*
+        /**
          * @var string Report attribute "Created"
-         * @access private
          */
         private $created;
-        /*
+        /**
          * @var string Report attribute "ID"
-         * @access private
          */
         private $id;
-        /*
+        /**
          * @var string Report attribute "Version"
-         * @access private
          */
         private $version;
-        /*
+        /**
          * @var string Report attribute "Name"
-         * @access private
          */
         private $name;
-        /*
+        /**
          * @var string Report attribute "Title"
-         * @access private
          */
         private $title;
-        /*
+        /**
          * @var COUNTER\Vendor
-         * @access private
          */
         private $vendor;
-        /*
+        /**
          * @var array one or more COUNTER\Customer objects
-         * @access private
          */
         private $customer;
 
@@ -602,29 +594,24 @@ namespace COUNTER {
      */
     class Vendor extends ReportBuilder
     {
-        /*
+        /**
          * @var string Vendor element "Name"
-         * @access private
          */
         private $name;
-        /*
+        /**
          * @var string Vendor element "ID"
-         * @access private
          */
         private $id;
-        /*
+        /**
          * @var array zero or more COUNTER\Contact elements
-         * @access private
          */
         private $contact = [];
-        /*
+        /**
          * @var string Vendor element "WebSiteUrl"
-         * @access private
          */
         private $webSiteUrl;
-        /*
+        /**
          * @var string Vendor element "LogoUrl"
-         * @access private
          */
         private $logoUrl;
 
@@ -707,14 +694,12 @@ namespace COUNTER {
      */
     class Contact extends ReportBuilder
     {
-        /*
+        /**
          * @var string Contact element "Contact"
-         * @access private
          */
         private $contact;
-        /*
+        /**
          * @var string Contact element "Email"
-         * @access private
          */
         private $email;
 
@@ -809,44 +794,36 @@ namespace COUNTER {
      */
     class Customer extends ReportBuilder
     {
-        /*
+        /**
          * @var string Customer element "Name"
-         * @access private
          */
         private $name;
-        /*
+        /**
          * @var string Customer element "ID"
-         * @access private
          */
         private $id;
-        /*
+        /**
          * @var array zero or more COUNTER\Contact elements
-         * @access private
          */
         private $contact;
-        /*
+        /**
          * @var string Customer element "WebSiteUrl"
-         * @access private
          */
         private $webSiteUrl;
-        /*
+        /**
          * @var string Customer element "LogoUrl"
-         * @access private
          */
         private $logoUrl;
-        /*
+        /**
          * @var string Customer element "Consortium"
-         * @access private
          */
         private $consortium;
-        /*
+        /**
          * @var array zero or more COUNTER\Identifier elements
-         * @access private
          */
         private $institutionalIdentifier;
-        /*
+        /**
          * @var array one or more COUNTER\ReportItem elements
-         * @access private
          */
         private $reportItems;
 
@@ -951,19 +928,18 @@ namespace COUNTER {
      */
     class Consortium extends ReportBuilder
     {
-        /*
+        /**
          * @var string Consortium element "Code"
-         * @access private
          */
         private $code;
-        /*
+        /**
          * @var string Consortium element "WellKnownName"
-         * @access private
          */
         private $wellKnownName;
 
-        /*
+        /**
          * Construct the object
+         *
          * @param string $wellKnownName
          * @param string $code optional
          */
@@ -1027,54 +1003,44 @@ namespace COUNTER {
      */
     class ReportItems extends ReportBuilder
     {
-        /*
+        /**
          * @var COUNTER\ParentItem ReportItem element "ParentItem"
-         * @access private
          */
         private $parentItem;
-        /*
+        /**
          * @var array zero or more COUNTER\Identifier elements
-         * @access private
          */
         private $itemIdentifier;
-        /*
+        /**
          * @var array zero or more COUNTER\ItemContributor elements
-         * @access private
          */
         private $itemContributor;
-        /*
+        /**
          * @var array zero or more COUNTER\ItemDate elements
-         * @access private
          */
         private $itemDate;
-        /*
+        /**
          * @var array zero or more COUNTER\ItemAttribute elements
-         * @access private
          */
         private $itemAttribute;
-        /*
+        /**
          * @var string ReportItem element "ItemPlatform"
-         * @access private
          */
         private $itemPlatform;
-        /*
+        /**
          * @var string ReportItem element "ItemPublisher"
-         * @access private
          */
         private $itemPublisher;
-        /*
+        /**
          * @var string ReportItem element "ItemName"
-         * @access private
          */
         private $itemName;
-        /*
+        /**
          * @var COUNTER\ItemDataType ReportItem element "ItemData"
-         * @access private
          */
         private $itemDataType;
-        /*
+        /**
          * @var array one or more COUNTER\Metric elements
-         * @access private
          */
         private $itemPerformance;
 
@@ -1196,39 +1162,32 @@ namespace COUNTER {
      */
     class ParentItem extends ReportBuilder
     {
-        /*
+        /**
          * @var array zero or more COUNTER\Identifier elements
-         * @access private
          */
         private $itemIdentifier;
-        /*
+        /**
          * @var array zero or more COUNTER\ItemContributor elements
-         * @access private
          */
         private $itemContributor;
-        /*
+        /**
          * @var array zero or more COUNTER\ItemDate elements
-         * @access private
          */
         private $itemDate;
-        /*
+        /**
          * @var array zero or more COUNTER\ItemAttribute elements
-         * @access private
          */
         private $itemAttribute;
-        /*
+        /**
          * @var string ParentItem element "ItemPublisher"
-         * @access private
          */
         private $itemPublisher;
-        /*
+        /**
          * @var string ParentItem element "ItemName"
-         * @access private
          */
         private $itemName;
-        /*
+        /**
          * @var COUNTER\DataType ParentItem element "ItemDataType"
-         * @access private
          */
         private $itemDataType;
 
@@ -1334,24 +1293,20 @@ namespace COUNTER {
      */
     class ItemContributor extends ReportBuilder
     {
-        /*
+        /**
          * @var array zero or more COUNTER\ItemContributorID elements
-         * @access private
          */
         private $itemContributorId;
-        /*
+        /**
          * @var string ItemContributor element "Name"
-         * @access private
          */
         private $itemContributorName;
-        /*
+        /**
          * @var string ItemContributor element "Affiliation"
-         * @access private
          */
         private $itemContributorAffiliation;
-        /*
+        /**
          * @var string ItemContributor element "Role"
-         * @access private
          */
         private $itemContributorRole;
 
@@ -1435,14 +1390,12 @@ namespace COUNTER {
      */
     class ItemContributorId extends ReportBuilder
     {
-        /*
+        /**
          * @var string ItemContributorID element "Type"
-         * @access private
          */
         private $type;
-        /*
+        /**
          * @var string ItemContributorID element "Value"
-         * @access private
          */
         private $value;
 
@@ -1509,14 +1462,12 @@ namespace COUNTER {
      */
     class Identifier extends ReportBuilder
     {
-        /*
+        /**
          * @var string Identifier element "Type"
-         * @access private
          */
         private $type;
-        /*
+        /**
          * @var string Identifier element "Type"
-         * @access private
          */
         private $value;
 
@@ -1583,14 +1534,12 @@ namespace COUNTER {
      */
     class ItemDate extends ReportBuilder
     {
-        /*
+        /**
          * @var string ItemDate element "Type"
-         * @access private
          */
         private $type;
-        /*
+        /**
          * @var string ItemDate element "Value"
-         * @access private
          */
         private $value;
 
@@ -1656,14 +1605,12 @@ namespace COUNTER {
      */
     class ItemAttribute extends ReportBuilder
     {
-        /*
+        /**
          * @var string ItemAttribute element "Type"
-         * @access private
          */
         private $type;
-        /*
+        /**
          * @var string ItemAttribute element "Value"
-         * @access private
          */
         private $value;
 
@@ -1730,34 +1677,28 @@ namespace COUNTER {
      */
     class Metric extends ReportBuilder
     {
-        /*
+        /**
          * @var int Metric element "PubYr"
-         * @access private
          */
         private $pubYr;
-        /*
+        /**
          * @var int Metric element "PubYrFrom"
-         * @access private
          */
         private $pubYrFrom;
-        /*
+        /**
          * @var int Metric element "PubYrTo"
-         * @access private
          */
         private $pubYrTo;
-        /*
+        /**
          * @var COUNTER\DateRange Metric element "Period"
-         * @access private
          */
         private $period;
-        /*
+        /**
          * @var COUNTER\Category Metric element "Category"
-         * @access private
          */
         private $category;
-        /*
+        /**
          * @var array one or more COUNTER\PerformanceCounter elements
-         * @access private
          */
         private $instance;
 
@@ -1858,14 +1799,12 @@ namespace COUNTER {
      */
     class DateRange extends ReportBuilder
     {
-        /*
+        /**
          * @var \DateTime DateRange element "Begin"
-         * @access private
          */
         private $begin;
-        /*
+        /**
          * @var \DateTime DateRange element "End"
-         * @access private
          */
         private $end;
 
@@ -1926,14 +1865,12 @@ namespace COUNTER {
      */
     class PerformanceCounter extends ReportBuilder
     {
-        /*
+        /**
          * @var COUNTER\MetricType PerformanceCounter element "MetricType"
-         * @access private
          */
         private $metricType;
-        /*
+        /**
          * @var int PerformanceCounter element "Count"
-         * @access private
          */
         private $count;
 
@@ -1941,7 +1878,7 @@ namespace COUNTER {
          * Construct the object
          *
          * @param string $metricType
-         * @param integer $count
+         * @param int $count
          *
          * @throws Exception
          */
