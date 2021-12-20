@@ -385,7 +385,7 @@ namespace COUNTER {
          */
         public static function build($array)
         {
-            throw new \Exception('Failed to build ' . get_called_class() . ' from data ' . var_export($array, true));
+            throw new \Exception('Failed to build ' . static::class . ' from data ' . var_export($array, true));
         }
     }
 
