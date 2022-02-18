@@ -1,6 +1,6 @@
 <?php
 
-/*
+/**
  * Copyright (c) 2015 University of Pittsburgh
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ namespace COUNTER {
      * @section DESCRIPTION
      *
      * This is a set of classes to represent the Project COUNTER schema ( http://www.projectcounter.org/ )
-     * It is basically an ecapsulation of DOMDocument, with type checking.
+     * It is basically an encapsulation of DOMDocument, with type checking.
      * Construct any object, then cast it as a string to retrieve the XML, or call asDOMDocument() to retrieve the DOM.
      * $report = new COUNTER\Report(
      * 	'reportId',
@@ -65,7 +65,7 @@ namespace COUNTER {
      * 	),
      * 	new COUNTER\Vendor('vendorId')
      * );
-     * print $report;
+     * echo $report;
      */
 
     /**
@@ -99,12 +99,11 @@ namespace COUNTER {
             }
             if (is_null($object)) {
                 throw new \Exception('Invalid object. Expected "' . $expectedClassname . '", got "NULL"');
-            } elseif (is_array($object)) {
-                switch ($className) {
-                    default:
-                        throw new \Exception('Invalid class. Expected "' . $expectedClassname . '", got unparsable array');
-                }
-            } elseif (is_string($object)) {
+            }
+            if (is_array($object)) {
+                throw new \Exception('Invalid class. Expected "' . $expectedClassname . '", got unparsable array');
+            }
+            if (is_string($object)) {
                 switch ($className) {
                     case '\DateTime':
                         $date = date_create($object);
@@ -115,11 +114,11 @@ namespace COUNTER {
                     default:
                 }
                 throw new \Exception('Invalid class. Expected "' . $expectedClassname . '", got unparsable string');
-            } elseif ($expectedClassname == get_class($object) || is_subclass_of($object, $expectedClassname)) {
-                return $object;
-            } else {
-                throw new \Exception('Invalid class. Expected "' . $expectedClassname . '", got "' . get_class($object) . '"');
             }
+            if ($expectedClassname == get_class($object) || is_subclass_of($object, $expectedClassname)) {
+                return $object;
+            }
+            throw new \Exception('Invalid class. Expected "' . $expectedClassname . '", got "' . get_class($object) . '"');
         }
 
         /**
@@ -139,9 +138,8 @@ namespace COUNTER {
                     $this->validateOneOf($object, $className);
                 }
                 return $objects;
-            } else {
-                return [$this->validateOneOf($objects, $className)];
             }
+            return [$this->validateOneOf($objects, $className)];
         }
 
         /**
@@ -158,9 +156,8 @@ namespace COUNTER {
         {
             if (empty($objects)) {
                 return;
-            } else {
-                return $this->validateOneOrMoreOf($objects, $className);
             }
+            return $this->validateOneOrMoreOf($objects, $className);
         }
 
         /**
@@ -177,9 +174,8 @@ namespace COUNTER {
         {
             if (empty($object)) {
                 return;
-            } else {
-                return $this->validateOneOf($object, $className);
             }
+            return $this->validateOneOf($object, $className);
         }
 
         /**
@@ -233,9 +229,11 @@ namespace COUNTER {
                     $this->validateString($string);
                 }
                 return $array;
-            } elseif (is_string($array)) {
+            }
+            if (is_string($array)) {
                 return [$array];
-            } elseif (!empty($array)) {
+            }
+            if (!empty($array)) {
                 throw new \Exception('Invalid string array: ' . gettype($array));
             }
         }
@@ -245,7 +243,7 @@ namespace COUNTER {
          *
          * @param array $array
          *
-         * @return boolean
+         * @return bool
          */
         protected static function isAssociative($array)
         {
@@ -265,15 +263,15 @@ namespace COUNTER {
         {
             if (!is_array($array)) {
                 return [];
-            } elseif (self::isAssociative($array)) {
-                return $classname::build($array);
-            } else {
-                $elements = [];
-                foreach ($array as $element) {
-                    $elements[] = $classname::build($element);
-                }
-                return $elements;
             }
+            if (self::isAssociative($array)) {
+                return $classname::build($array);
+            }
+            $elements = [];
+            foreach ($array as $element) {
+                $elements[] = $classname::build($element);
+            }
+            return $elements;
         }
 
         /**
@@ -385,7 +383,7 @@ namespace COUNTER {
          */
         public static function build($array)
         {
-            throw new \Exception('Failed to build ' . get_called_class() . ' from data ' . var_export($array, true));
+            throw new \Exception('Failed to build ' . static::class . ' from data ' . var_export($array, true));
         }
     }
 
@@ -395,9 +393,8 @@ namespace COUNTER {
      */
     class Reports extends ReportBuilder
     {
-        /*
+        /**
          * @var array one or more COUNTER\Report objects
-         * @access private
          */
         private $report = [];
 
@@ -429,7 +426,8 @@ namespace COUNTER {
                     // Nicely structured associative array
                     $reports = parent::buildMultiple('COUNTER\Report', $array['Report']);
                     return new self($reports);
-                } elseif (!parent::isAssociative($array)) {
+                }
+                if (!parent::isAssociative($array)) {
                     // Just an array of reports
                     $reports = parent::buildMultiple('COUNTER\Report', $array);
                     return new self($reports);
@@ -484,39 +482,32 @@ namespace COUNTER {
      */
     class Report extends ReportBuilder
     {
-        /*
+        /**
          * @var string Report attribute "Created"
-         * @access private
          */
         private $created;
-        /*
+        /**
          * @var string Report attribute "ID"
-         * @access private
          */
         private $id;
-        /*
+        /**
          * @var string Report attribute "Version"
-         * @access private
          */
         private $version;
-        /*
+        /**
          * @var string Report attribute "Name"
-         * @access private
          */
         private $name;
-        /*
+        /**
          * @var string Report attribute "Title"
-         * @access private
          */
         private $title;
-        /*
+        /**
          * @var COUNTER\Vendor
-         * @access private
          */
         private $vendor;
-        /*
+        /**
          * @var array one or more COUNTER\Customer objects
-         * @access private
          */
         private $customer;
 
@@ -602,29 +593,24 @@ namespace COUNTER {
      */
     class Vendor extends ReportBuilder
     {
-        /*
+        /**
          * @var string Vendor element "Name"
-         * @access private
          */
         private $name;
-        /*
+        /**
          * @var string Vendor element "ID"
-         * @access private
          */
         private $id;
-        /*
+        /**
          * @var array zero or more COUNTER\Contact elements
-         * @access private
          */
         private $contact = [];
-        /*
+        /**
          * @var string Vendor element "WebSiteUrl"
-         * @access private
          */
         private $webSiteUrl;
-        /*
+        /**
          * @var string Vendor element "LogoUrl"
-         * @access private
          */
         private $logoUrl;
 
@@ -707,14 +693,12 @@ namespace COUNTER {
      */
     class Contact extends ReportBuilder
     {
-        /*
+        /**
          * @var string Contact element "Contact"
-         * @access private
          */
         private $contact;
-        /*
+        /**
          * @var string Contact element "Email"
-         * @access private
          */
         private $email;
 
@@ -751,36 +735,34 @@ namespace COUNTER {
                 }
                 if (isset($array['Contact']) || isset($array['Email'])) {
                     return new self($array['Contact'] ? $array['Contact'] : '', $array['Email'] ? $array['Email'] : '');
-                } elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
+                }
+                if (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
                     // Loosely structured associative array (name/email => name/email)
                     foreach ($array as $k => $v) {
                         if (filter_var($k, FILTER_VALIDATE_EMAIL)) {
                             // email => name
                             return new self($v, $k);
-                        } else {
-                            // name => email
-                            return new self($k, $v);
                         }
+                        // name => email
+                        return new self($k, $v);
                     }
                 } elseif (count(array_keys($array)) == 1 && !parent::isAssociative($array)) {
                     // Loosely array with a name or email
                     if (filter_var($k, FILTER_VALIDATE_EMAIL)) {
                         // email
                         return new self('', $array[0]);
-                    } else {
-                        // name
-                        return new self($array[0]);
                     }
+                    // name
+                    return new self($array[0]);
                 }
             } elseif (is_string($array)) {
                 // Just a name or email
                 if (filter_var($array, FILTER_VALIDATE_EMAIL)) {
                     // email
                     return new self('', $array);
-                } else {
-                    // name
-                    return new self($array);
                 }
+                // name
+                return new self($array);
             }
             parent::build($array);
         }
@@ -809,44 +791,36 @@ namespace COUNTER {
      */
     class Customer extends ReportBuilder
     {
-        /*
+        /**
          * @var string Customer element "Name"
-         * @access private
          */
         private $name;
-        /*
+        /**
          * @var string Customer element "ID"
-         * @access private
          */
         private $id;
-        /*
+        /**
          * @var array zero or more COUNTER\Contact elements
-         * @access private
          */
         private $contact;
-        /*
+        /**
          * @var string Customer element "WebSiteUrl"
-         * @access private
          */
         private $webSiteUrl;
-        /*
+        /**
          * @var string Customer element "LogoUrl"
-         * @access private
          */
         private $logoUrl;
-        /*
+        /**
          * @var string Customer element "Consortium"
-         * @access private
          */
         private $consortium;
-        /*
+        /**
          * @var array zero or more COUNTER\Identifier elements
-         * @access private
          */
         private $institutionalIdentifier;
-        /*
+        /**
          * @var array one or more COUNTER\ReportItem elements
-         * @access private
          */
         private $reportItems;
 
@@ -951,19 +925,18 @@ namespace COUNTER {
      */
     class Consortium extends ReportBuilder
     {
-        /*
+        /**
          * @var string Consortium element "Code"
-         * @access private
          */
         private $code;
-        /*
+        /**
          * @var string Consortium element "WellKnownName"
-         * @access private
          */
         private $wellKnownName;
 
-        /*
+        /**
          * Construct the object
+         *
          * @param string $wellKnownName
          * @param string $code optional
          */
@@ -989,7 +962,8 @@ namespace COUNTER {
                 if (isset($array['WellKnownName'])) {
                     // Nicely structured associative array
                     return new self($array['WellKnownName'], $array['Code'] ? $array['Code'] : '');
-                } elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
+                }
+                if (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
                     // Loosely structured associative array (name => code)
                     foreach ($array as $k => $v) {
                         return new self($k, $v);
@@ -1027,54 +1001,44 @@ namespace COUNTER {
      */
     class ReportItems extends ReportBuilder
     {
-        /*
+        /**
          * @var COUNTER\ParentItem ReportItem element "ParentItem"
-         * @access private
          */
         private $parentItem;
-        /*
+        /**
          * @var array zero or more COUNTER\Identifier elements
-         * @access private
          */
         private $itemIdentifier;
-        /*
+        /**
          * @var array zero or more COUNTER\ItemContributor elements
-         * @access private
          */
         private $itemContributor;
-        /*
+        /**
          * @var array zero or more COUNTER\ItemDate elements
-         * @access private
          */
         private $itemDate;
-        /*
+        /**
          * @var array zero or more COUNTER\ItemAttribute elements
-         * @access private
          */
         private $itemAttribute;
-        /*
+        /**
          * @var string ReportItem element "ItemPlatform"
-         * @access private
          */
         private $itemPlatform;
-        /*
+        /**
          * @var string ReportItem element "ItemPublisher"
-         * @access private
          */
         private $itemPublisher;
-        /*
+        /**
          * @var string ReportItem element "ItemName"
-         * @access private
          */
         private $itemName;
-        /*
+        /**
          * @var COUNTER\ItemDataType ReportItem element "ItemData"
-         * @access private
          */
         private $itemDataType;
-        /*
+        /**
          * @var array one or more COUNTER\Metric elements
-         * @access private
          */
         private $itemPerformance;
 
@@ -1196,39 +1160,32 @@ namespace COUNTER {
      */
     class ParentItem extends ReportBuilder
     {
-        /*
+        /**
          * @var array zero or more COUNTER\Identifier elements
-         * @access private
          */
         private $itemIdentifier;
-        /*
+        /**
          * @var array zero or more COUNTER\ItemContributor elements
-         * @access private
          */
         private $itemContributor;
-        /*
+        /**
          * @var array zero or more COUNTER\ItemDate elements
-         * @access private
          */
         private $itemDate;
-        /*
+        /**
          * @var array zero or more COUNTER\ItemAttribute elements
-         * @access private
          */
         private $itemAttribute;
-        /*
+        /**
          * @var string ParentItem element "ItemPublisher"
-         * @access private
          */
         private $itemPublisher;
-        /*
+        /**
          * @var string ParentItem element "ItemName"
-         * @access private
          */
         private $itemName;
-        /*
+        /**
          * @var COUNTER\DataType ParentItem element "ItemDataType"
-         * @access private
          */
         private $itemDataType;
 
@@ -1334,24 +1291,20 @@ namespace COUNTER {
      */
     class ItemContributor extends ReportBuilder
     {
-        /*
+        /**
          * @var array zero or more COUNTER\ItemContributorID elements
-         * @access private
          */
         private $itemContributorId;
-        /*
+        /**
          * @var string ItemContributor element "Name"
-         * @access private
          */
         private $itemContributorName;
-        /*
+        /**
          * @var string ItemContributor element "Affiliation"
-         * @access private
          */
         private $itemContributorAffiliation;
-        /*
+        /**
          * @var string ItemContributor element "Role"
-         * @access private
          */
         private $itemContributorRole;
 
@@ -1360,8 +1313,8 @@ namespace COUNTER {
          *
          * @param array $itemContributorIds optional COUNTER\ContributorId array
          * @param string $itemContributorName optional
-         * @param array itemContributorAffiliations optional string array
-         * @param array itemContributorRoles optional string array
+         * @param array $itemContributorAffiliations optional string array
+         * @param array $itemContributorRoles optional string array
          *
          * @throws Exception
          */
@@ -1435,14 +1388,12 @@ namespace COUNTER {
      */
     class ItemContributorId extends ReportBuilder
     {
-        /*
+        /**
          * @var string ItemContributorID element "Type"
-         * @access private
          */
         private $type;
-        /*
+        /**
          * @var string ItemContributorID element "Value"
-         * @access private
          */
         private $value;
 
@@ -1479,7 +1430,8 @@ namespace COUNTER {
                 if (isset($array['Type']) && isset($array['Value'])) {
                     // Nicely structured associative array
                     return new self($array['Type'], $array['Value']);
-                } elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
+                }
+                if (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
                     // Loosely structured associative array (type => value)
                     foreach ($array as $k => $v) {
                         return new self($k, $v);
@@ -1509,14 +1461,12 @@ namespace COUNTER {
      */
     class Identifier extends ReportBuilder
     {
-        /*
+        /**
          * @var string Identifier element "Type"
-         * @access private
          */
         private $type;
-        /*
+        /**
          * @var string Identifier element "Type"
-         * @access private
          */
         private $value;
 
@@ -1553,7 +1503,8 @@ namespace COUNTER {
                 if (isset($array['Type']) && isset($array['Value'])) {
                     // Nicely structured associative array
                     return new self($array['Type'], $array['Value']);
-                } elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
+                }
+                if (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
                     // Loosely structured associative array (type => value)
                     foreach ($array as $k => $v) {
                         return new self($k, $v);
@@ -1583,14 +1534,12 @@ namespace COUNTER {
      */
     class ItemDate extends ReportBuilder
     {
-        /*
+        /**
          * @var string ItemDate element "Type"
-         * @access private
          */
         private $type;
-        /*
+        /**
          * @var string ItemDate element "Value"
-         * @access private
          */
         private $value;
 
@@ -1626,7 +1575,8 @@ namespace COUNTER {
                 if (isset($array['Type']) && isset($array['Value'])) {
                     // Nicely structured associative array
                     return new self($array['Type'], $array['Value']);
-                } elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
+                }
+                if (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
                     // Loosely structured associative array (type => value)
                     foreach ($array as $k => $v) {
                         return new self($k, $v);
@@ -1656,14 +1606,12 @@ namespace COUNTER {
      */
     class ItemAttribute extends ReportBuilder
     {
-        /*
+        /**
          * @var string ItemAttribute element "Type"
-         * @access private
          */
         private $type;
-        /*
+        /**
          * @var string ItemAttribute element "Value"
-         * @access private
          */
         private $value;
 
@@ -1700,7 +1648,8 @@ namespace COUNTER {
                 if (isset($array['Type']) && isset($array['Value'])) {
                     // Nicely structured associative array
                     return new self($array['Type'], $array['Value']);
-                } elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
+                }
+                if (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
                     // Loosely structured associative array (type => value)
                     foreach ($array as $k => $v) {
                         return new self($k, $v);
@@ -1730,34 +1679,28 @@ namespace COUNTER {
      */
     class Metric extends ReportBuilder
     {
-        /*
+        /**
          * @var int Metric element "PubYr"
-         * @access private
          */
         private $pubYr;
-        /*
+        /**
          * @var int Metric element "PubYrFrom"
-         * @access private
          */
         private $pubYrFrom;
-        /*
+        /**
          * @var int Metric element "PubYrTo"
-         * @access private
          */
         private $pubYrTo;
-        /*
+        /**
          * @var COUNTER\DateRange Metric element "Period"
-         * @access private
          */
         private $period;
-        /*
+        /**
          * @var COUNTER\Category Metric element "Category"
-         * @access private
          */
         private $category;
-        /*
+        /**
          * @var array one or more COUNTER\PerformanceCounter elements
-         * @access private
          */
         private $instance;
 
@@ -1767,9 +1710,9 @@ namespace COUNTER {
          * @param array $period COUNTER\DateRange array
          * @param array $category COUNTER\Category array
          * @param array $instances COUNTER\PerformanceCounter array
-         * @param int pubYrFrom optional
-         * @param int pubYrTo optional
-         * @param int pubYr optional
+         * @param int $pubYrFrom optional
+         * @param int $pubYrTo optional
+         * @param int $pubYr optional
          * @param null|mixed $pubYrFrom
          * @param null|mixed $pubYrTo
          * @param null|mixed $pubYr
@@ -1858,14 +1801,12 @@ namespace COUNTER {
      */
     class DateRange extends ReportBuilder
     {
-        /*
+        /**
          * @var \DateTime DateRange element "Begin"
-         * @access private
          */
         private $begin;
-        /*
+        /**
          * @var \DateTime DateRange element "End"
-         * @access private
          */
         private $end;
 
@@ -1898,7 +1839,8 @@ namespace COUNTER {
                 if (isset($array['Begin']) && isset($array['End'])) {
                     // Nicely structured associative array
                     return new self($array['Begin'], $array['End']);
-                } elseif (count(array_keys($array)) == 2 && !parent::isAssociative($array)) {
+                }
+                if (count(array_keys($array)) == 2 && !parent::isAssociative($array)) {
                     // Unstructured array of two elements, assume begin and end dates
                     return new self($array[0], $array[1]);
                 }
@@ -1926,14 +1868,12 @@ namespace COUNTER {
      */
     class PerformanceCounter extends ReportBuilder
     {
-        /*
+        /**
          * @var COUNTER\MetricType PerformanceCounter element "MetricType"
-         * @access private
          */
         private $metricType;
-        /*
+        /**
          * @var int PerformanceCounter element "Count"
-         * @access private
          */
         private $count;
 
@@ -1941,7 +1881,7 @@ namespace COUNTER {
          * Construct the object
          *
          * @param string $metricType
-         * @param integer $count
+         * @param int $count
          *
          * @throws Exception
          */
@@ -1969,7 +1909,8 @@ namespace COUNTER {
                 if (isset($array['MetricType']) && isset($array['Count'])) {
                     // Nicely structured associative array
                     return new self($array['MetricType'], $array['Count']);
-                } elseif (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
+                }
+                if (count(array_keys($array)) == 1 && parent::isAssociative($array)) {
                     // Loosely structured associative array (type => count)
                     foreach ($array as $k => $v) {
                         return new self($k, $v);
